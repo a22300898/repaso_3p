@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Task Manager</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<div class="app-container">
+    <!-- Left Pane: Add Task & Task Sections -->
+    <main class="left-pane">
+        <header class="pane-header">
+            <h1>Inbox</h1>
+        </header>
+
+        <!-- Add Task Bar -->
+        <form class="add-task-box" id="add-task-form">
+            <input
+                    type="text"
+                    id="task-title-input"
+                    class="task-title-input"
+                    placeholder="Title"
+                    required
+            />
+            <textarea
+                    id="task-desc-input"
+                    class="task-desc-input"
+                    placeholder="Description"
+                    rows="2"
+            ></textarea>
+
+            <div class="add-task-footer">
+                <div class="add-task-controls">
+                    <select id="subject-select" class="control-select" aria-label="Subject" required>
+                        <option value="" disabled selected>Subject</option>
+                        <option value="organismos">Organismos</option>
+                        <option value="probabilidad-y-estadistica">Probabilidad y Estadistica</option>
+                        <option value="programacion-movil-1">Programacion Movil I</option>
+                        <option value="ingles-6">Ingles VI</option>
+                        <option value="historia-3">Historia III</option>
+                        <option value="sistemas-embebidos-1">Sistemas Embebidos I</option>
+                        <option value="modelos-y-metodos-2">Modelos y Metodos de Desarrollo de Software II</option>
+                        <option value="humanidades-3">Humanidades III</option>
+                        <option value="programacion-web-1">Programacion Web I</option>
+                    </select>
+
+                    <select id="priority-select" class="control-select" aria-label="Priority" required>
+                        <option value="" disabled selected>Priority</option>
+                        <option value="low">🔵 Low</option>
+                        <option value="medium">🟡 Medium</option>
+                        <option value="high">🔴 High</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn-add" id="btn-add">Add</button>
+            </div>
+        </form>
+
+        <!-- Section 1: Pending -->
+        <section class="task-section" id="section-pending">
+            <div class="section-header">
+                <span class="section-title">Pending</span>
+                <span class="section-count" id="count-pending">0</span>
+            </div>
+            <ul class="task-list" id="list-pending"></ul>
+        </section>
+
+        <!-- Section 2: In Progress -->
+        <section class="task-section" id="section-in-progress">
+            <div class="section-header">
+                <span class="section-title">In Progress</span>
+                <span class="section-count" id="count-in-progress">0</span>
+            </div>
+            <ul class="task-list" id="list-in-progress"></ul>
+        </section>
+
+        <!-- Section 3: Completed -->
+        <section class="task-section" id="section-completed">
+            <div class="section-header">
+                <span class="section-title">Completed</span>
+                <span class="section-count" id="count-completed">0</span>
+            </div>
+            <ul class="task-list" id="list-completed"></ul>
+        </section>
+    </main>
+
+    <!-- Right Pane: Empty until a task is selected; editable when shown -->
+    <aside class="right-pane" id="task-detail-pane">
+        <div class="task-detail hidden" id="task-detail-content">
+            <input
+                    type="text"
+                    id="detail-title-input"
+                    class="detail-title-input"
+                    placeholder="Task title"
+                    aria-label="Edit task title"
+            />
+            <textarea
+                    id="detail-description-input"
+                    class="detail-description-input"
+                    placeholder="Add a description..."
+                    aria-label="Edit task description"
+            ></textarea>
+        </div>
+    </aside>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
