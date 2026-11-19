@@ -1,143 +1,77 @@
 const taskModel = require('../Modelos/taskModel');
 
-const VALID_PRIORITIES = ['low', 'medium', 'high'];
-const VALID_STATUSES = ['pending', 'in-progress', 'completed'];
-
 const taskController = {
-    // GET /api/tasks
+    // Maneja GET /api/tasks: solicita todas las tareas al modelo y las devuelve en formato JSON.
     async getAllTasks(req, res) {
         try {
             const tasks = await taskModel.getAllTasks();
-            return res.status(200).json(tasks);
+            res.status(200).json(tasks);
         } catch (error) {
-            console.error('Error fetching tasks:', error);
-            return res.status(500).json({ error: 'Internal server error while fetching tasks.' });
+            console.error('Error al obtener tareas:', error);
+            res.status(500).json({ error: 'Error al obtener tareas.' });
         }
     },
 
-    // POST /api/tasks?title=...&description=...&subject=...&priority=...
+    // Maneja POST /api/tasks: lee los parámetros de la URL, valida que no falten campos obligatorios y crea la tarea.
     async createTask(req, res) {
         try {
             const { title, description, subject, priority } = req.query;
 
-            if (!title || typeof title !== 'string' || title.trim().length === 0) {
-                return res.status(400).json({ error: 'Task title is required.' });
+            if (!title || !title.trim() || !subject || !priority) {
+                return res.status(400).json({ error: 'Faltan campos obligatorios.' });
             }
 
-            if (title.trim().length > 255) {
-                return res.status(400).json({ error: 'Task title must be 255 characters or fewer.' });
-            }
+            const insertId = await taskModel.createTask(
+                title.trim(),
+                description ? description.trim() : '',
+                subject,
+                priority
+            );
 
-            if (!subject || typeof subject !== 'string' || subject.trim().length === 0) {
-                return res.status(400).json({ error: 'Subject is required.' });
-            }
-
-            if (!priority || !VALID_PRIORITIES.includes(priority)) {
-                return res.status(400).json({
-                    error: `Invalid priority. Allowed values: ${VALID_PRIORITIES.join(', ')}.`,
-                });
-            }
-
-            const newTask = await taskModel.createTask({
-                title: title.trim(),
-                description: description ? description.trim() : '',
-                subjectSlug: subject.trim(),
-                priority,
-            });
-
-            if (!newTask) {
-                return res.status(400).json({ error: 'Selected subject does not exist.' });
-            }
-
-            return res.status(201).json(newTask);
+            res.status(201).json({ id: insertId });
         } catch (error) {
-            console.error('Error creating task:', error);
-            return res.status(500).json({ error: 'Internal server error while creating task.' });
+            console.error('Error al crear tarea:', error);
+            res.status(500).json({ error: 'Error al crear tarea.' });
         }
     },
 
-    // PUT /api/tasks/:id?title=...&description=...
+    // Maneja POST /api/tasks/:id: ruta unificada de actualización.
+    // Si recibe el parámetro 'status', actualiza solo el estado; de lo contrario, actualiza título y descripción.
     async updateTask(req, res) {
         try {
-            const taskId = Number(req.params.id);
-            const { title, description } = req.query;
+            const id = req.params.id;
+            const { title, description, status } = req.query;
 
-            if (!Number.isInteger(taskId) || taskId <= 0) {
-                return res.status(400).json({ error: 'Invalid task ID.' });
+            if (status) {
+                const updated = await taskModel.updateStatus(id, status);
+                if (!updated) return res.status(404).json({ error: 'Tarea no encontrada.' });
+                return res.status(200).json({ message: 'Estado actualizado.' });
             }
 
-            if (!title || typeof title !== 'string' || title.trim().length === 0) {
-                return res.status(400).json({ error: 'Task title is required.' });
+            if (!title || !title.trim()) {
+                return res.status(400).json({ error: 'El título es obligatorio.' });
             }
 
-            if (title.trim().length > 255) {
-                return res.status(400).json({ error: 'Task title must be 255 characters or fewer.' });
-            }
+            const updated = await taskModel.updateDetails(id, title.trim(), description || '');
+            if (!updated) return res.status(404).json({ error: 'Tarea no encontrada.' });
 
-            const updatedTask = await taskModel.updateTask(taskId, {
-                title: title.trim(),
-                description: description !== undefined ? description : '',
-            });
-
-            if (!updatedTask) {
-                return res.status(404).json({ error: 'Task not found.' });
-            }
-
-            return res.status(200).json(updatedTask);
+            res.status(200).json({ message: 'Tarea actualizada.' });
         } catch (error) {
-            console.error('Error updating task:', error);
-            return res.status(500).json({ error: 'Internal server error while updating task.' });
+            console.error('Error al actualizar tarea:', error);
+            res.status(500).json({ error: 'Error al actualizar tarea.' });
         }
     },
 
-    // PATCH /api/tasks/:id/status?status=...
-    async updateTaskStatus(req, res) {
-        try {
-            const taskId = Number(req.params.id);
-            const { status } = req.query;
-
-            if (!Number.isInteger(taskId) || taskId <= 0) {
-                return res.status(400).json({ error: 'Invalid task ID.' });
-            }
-
-            if (!status || !VALID_STATUSES.includes(status)) {
-                return res.status(400).json({
-                    error: `Invalid status. Allowed values: ${VALID_STATUSES.join(', ')}.`,
-                });
-            }
-
-            const updated = await taskModel.updateTaskStatus(taskId, status);
-
-            if (!updated) {
-                return res.status(404).json({ error: 'Task not found.' });
-            }
-
-            return res.status(200).json({ id: taskId, status });
-        } catch (error) {
-            console.error('Error updating task status:', error);
-            return res.status(500).json({ error: 'Internal server error while updating status.' });
-        }
-    },
-
-    // DELETE /api/tasks/:id
+    // Maneja POST /api/tasks/:id/delete: elimina la tarea indicada por el ID de la ruta.
     async deleteTask(req, res) {
         try {
-            const taskId = Number(req.params.id);
+            const deleted = await taskModel.deleteTask(req.params.id);
+            if (!deleted) return res.status(404).json({ error: 'Tarea no encontrada.' });
 
-            if (!Number.isInteger(taskId) || taskId <= 0) {
-                return res.status(400).json({ error: 'Invalid task ID.' });
-            }
-
-            const deleted = await taskModel.deleteTask(taskId);
-
-            if (!deleted) {
-                return res.status(404).json({ error: 'Task not found.' });
-            }
-
-            return res.status(200).json({ id: taskId, deleted: true });
+            res.status(200).json({ message: 'Tarea eliminada.' });
         } catch (error) {
-            console.error('Error deleting task:', error);
-            return res.status(500).json({ error: 'Internal server error while deleting task.' });
+            console.error('Error al eliminar tarea:', error);
+            res.status(500).json({ error: 'Error al eliminar tarea.' });
         }
     },
 };
